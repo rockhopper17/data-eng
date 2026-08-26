@@ -8,6 +8,10 @@ __pycache__/
 
 # custom for this project
 downloads/
+learn/smbc-spark/output/
+*.parquet
+.env
+*.env
 
 # Distribution / packaging
 .Python
