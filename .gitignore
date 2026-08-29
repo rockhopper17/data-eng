@@ -7,6 +7,8 @@ __pycache__/
 *.so
 
 # custom for this project
+books/
+data/
 downloads/
 learn/smbc-spark/output/
 *.parquet
