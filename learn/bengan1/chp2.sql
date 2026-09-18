@@ -94,3 +94,19 @@ FROM Sales.Customers
 -- WHERE region IS NULL;
 -- WHERE region <> N'WA' OR region IS NULL;
 WHERE region IS DISTINCT FROM N'WA';
+
+SELECT orderid, requireddate, shippeddate,
+  GREATEST(requireddate, shippeddate) AS latestdate,
+  LEAST(requireddate, shippeddate) AS  earliestdate
+FROM Sales.Orders
+WHERE custid = 8;
+
+SELECT name, [description]
+FROM sys.fn_helpcollations();
+
+SELECT empid, firstname + N' ' + lastname as fullname
+FROM HR.Employees;
+
+SELECT custid, country, region, city,
+  country + COALESCE(N',' + region, N'') + N',' + city AS location
+FROM Sales.Customers;
