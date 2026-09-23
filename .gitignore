@@ -14,6 +14,8 @@ learn/smbc-spark/output/
 *.parquet
 .env
 *.env
+obj/
+bin/
 
 # Distribution / packaging
 .Python
