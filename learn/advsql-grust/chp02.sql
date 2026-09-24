@@ -425,3 +425,108 @@ ORDER BY res.i, res.j;
 -- ======================================================================
 -- ======================================================================
 
+-- PostgreSQL only --
+-- SELECT DISTINCT ON ([∑d]) 1 AS branch, NOT t.c AS [¬c], SUM(t.d) AS [∑d]
+-- FROM   T AS t
+-- WHERE  t.b = 'x'
+-- GROUP BY [¬c]
+-- HAVING SUM(t.d) > 0
+
+--   UNION ALL
+
+-- SELECT DISTINCT ON ([∑d]) 2 AS branch, NOT t.c AS [¬c], SUM(t.d) AS [∑d]
+-- FROM   T AS t
+-- WHERE  t.b = 'x'
+-- GROUP BY [¬c]
+-- HAVING SUM(t.d) > 0
+
+-- ORDER BY branch
+-- OFFSET 0
+-- LIMIT  7;
+
+-- SET SHOWPLAN_TEXT ON;
+SET SHOWPLAN_TEXT OFF;
+GO
+
+WITH CombinedBranches AS (
+  -- branch 1 --
+  SELECT
+    1 AS branch,
+    ~t.c AS [¬c],
+    SUM(t.d) AS [∑d],
+    ROW_NUMBER() OVER (
+      PARTITION BY SUM(t.d)
+      ORDER BY (SELECT NULL)
+    ) AS rn
+  FROM T as t
+  WHERE t.b = 'x'
+  GROUP BY ~t.c
+  HAVING SUM(t.d) > 0
+
+  UNION ALL
+
+  -- branch 2 --
+  SELECT
+    2 AS branch,
+    ~t.c AS [¬c],
+    SUM(t.d) AS [∑d],
+    ROW_NUMBER() OVER (
+      PARTITION BY SUM(t.d)
+      ORDER BY (SELECT NULL)
+    ) AS rn
+  FROM T as t
+  WHERE t.b = 'x'
+  GROUP BY ~t.c
+  HAVING SUM(t.d) > 0
+)
+SELECT branch, [¬c], [∑d]
+FROM CombinedBranches
+WHERE rn = 1
+ORDER BY branch
+OFFSET 0 ROWS FETCH NEXT 7 ROWS ONLY;
+
+
+DROP TABLE IF EXISTS dinosaurs;
+CREATE TABLE dinosaurs (species text, height float, length float, legs int);
+
+INSERT INTO dinosaurs(species, height, length, legs) VALUES
+  ('Ceratosaurus',      4.0,   6.1,  2),
+  ('Deinonychus',       1.5,   2.7,  2),
+  ('Microvenator',      0.8,   1.2,  2),
+  ('Plateosaurus',      2.1,   7.9,  2),
+  ('Spinosaurus',       2.4,  12.2,  2),
+  ('Tyrannosaurus',     7.0,  15.2,  2),
+  ('Velociraptor',      0.6,   1.8,  2),
+  ('Apatosaurus',       2.2,  22.9,  4),
+  ('Brachiosaurus',     7.6,  30.5,  4),
+  ('Diplodocus',        3.6,  27.1,  4),
+  ('Supersaurus',      10.0,  30.5,  4),
+  ('Albertosaurus',     4.6,   9.1,  NULL),  -- Bi-/quadropedality is
+  ('Argentinosaurus',  10.7,  36.6,  NULL),  -- unknown for these species.
+  ('Compsognathus',     0.6,   0.9,  NULL),  --
+  ('Gallimimus',        2.4,   5.5,  NULL),  -- Try to infer pedality from
+  ('Mamenchisaurus',    5.3,  21.0,  NULL),  -- their ratio of body height
+  ('Oviraptor',         0.9,   1.5,  NULL),  -- to length.
+  ('Ultrasaurus',       8.1,  30.5,  NULL);  --
+
+SELECT * FROM dinosaurs;
+
+WITH bodies(legs, shape) AS (
+  SELECT d.legs, AVG(d.height / d.length) AS shape
+  FROM dinosaurs AS d
+  WHERE d.legs IS NOT NULL
+  GROUP BY d.legs
+)
+-- SELECT * FROM bodies;
+SELECT d.species, d.height, d.length,
+  (SELECT TOP 1 b.legs
+   FROM bodies AS b
+   ORDER BY abs(b.shape - d.height / d.length)) AS legs
+FROM dinosaurs AS d
+WHERE d.legs IS NULL
+
+  UNION ALL
+
+SELECT d.*
+FROM dinosaurs AS d
+WHERE d.legs IS NOT NULL;
