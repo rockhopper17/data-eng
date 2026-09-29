@@ -52,3 +52,22 @@ GO
 
 ---------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------
+
+SET STATISTICS PROFILE ON;
+SET STATISTICS TIME ON;
+SET STATISTICS IO ON;
+
+SELECT i.b, i.c
+FROM indexed as i
+WHERE i.a = 42;
+
+-- SET enable_indexscan = off;  -- PostgreSQL only
+-- SET enable_bitmapscan = off;
+
+SELECT i.b, i.c
+FROM indexed as i WITH (INDEX(0)) -- index hint (to use no index)
+WHERE i.a = 42;
+
+SET STATISTICS PROFILE OFF;
+SET STATISTICS TIME OFF;
+SET STATISTICS IO OFF;

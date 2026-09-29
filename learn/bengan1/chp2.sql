@@ -108,5 +108,28 @@ SELECT empid, firstname + N' ' + lastname as fullname
 FROM HR.Employees;
 
 SELECT custid, country, region, city,
-  country + COALESCE(N',' + region, N'') + N',' + city AS location
+  -- country + COALESCE(N',' + region, N'') + N',' + city AS location
+  -- CONCAT(country, N',' + region, N',' + city) AS location
+  CONCAT_WS(N',', country, region, city) AS location
 FROM Sales.Customers;
+
+SELECT TRANSLATE('123.456.789,00', '.,',',.');
+
+-- add leading zeros to a number to get all the same length
+SELECT supplierid,
+  RIGHT(REPLICATE('0',9) + CAST(supplierid AS varchar(10)), 10) AS str_supplier_id
+FROM Production.Suppliers;
+
+SELECT CAST(value AS int) as myvalue, ordinal
+FROM string_split('10248,10249,10250',',', 1) AS S;
+
+SELECT custid,
+  STRING_AGG(CAST(orderid AS varchar(10)), ',')
+    WITHIN GROUP(ORDER BY orderdate DESC, orderid DESC) as custorders
+FROM Sales.Orders
+GROUP BY custid;
+
+SELECT empid, lastname
+FROM HR.Employees
+-- WHERE lastname LIKE N'D%';
+WHERE lastname LIKE N'_e%';
