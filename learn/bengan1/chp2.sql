@@ -133,3 +133,89 @@ SELECT empid, lastname
 FROM HR.Employees
 -- WHERE lastname LIKE N'D%';
 WHERE lastname LIKE N'_e%';
+
+SELECT orderid, custid, empid, orderdate
+FROM Sales.Orders
+-- WHERE orderdate = '20220212';
+WHERE orderdate = CAST('20220212' AS DATE);
+
+SET LANGUAGE British;
+SELECT CAST('02/12/2022' AS DATE);
+SET LANGUAGE us_english;
+SELECT CAST('02/12/2022' AS DATE);
+
+------------------
+DROP TABLE IF EXISTS Sales.Orders2;
+SELECT orderid, custid, empid, CAST(orderdate AS DATETIME) AS orderdate
+INTO Sales.Orders2
+FROM Sales.Orders;
+
+SELECT orderid, custid, empid, orderdate
+FROM Sales.Orders2
+WHERE orderdate = '20220212';
+
+ALTER TABLE Sales.Orders2
+  ADD CONSTRAINT CHK_Orders2_orderdate
+  CHECK( CONVERT(CHAR(12), orderdate, 114) = '00:00:00:000');
+
+DROP TABLE IF EXISTS Sales.Orders2;
+------------------
+
+SELECT
+GETDATE() AS [GETDATE],
+CURRENT_TIMESTAMP AS [CURRENT_TIMESTAMP],
+GETUTCDATE() AS [GETUTCDATE],
+SYSDATETIME() AS [SYSDATETIME],
+SYSUTCDATETIME() AS [SYSUTCDATETIME],
+SYSDATETIMEOFFSET() AS [SYSDATETIMEOFFSET];
+
+SELECT [value]
+FROM GENERATE_SERIES(1, 10) AS N;
+
+DECLARE @startdate AS DATE = '20260101', @enddate AS DATE = '20261231';
+SELECT DATEADD(day, value, @startdate) AS dt
+FROM generate_series(0, DATEDIFF(day, @startdate, @enddate)) AS N;
+
+SELECT SCHEMA_NAME(schema_id) AS table_schema_name, name AS table_name
+FROM sys.tables;
+
+SELECT
+  name AS column_name,
+  TYPE_NAME(system_type_id) AS column_type,
+  max_length,
+  collation_name,
+  is_nullable
+FROM sys.columns
+WHERE object_id = OBJECT_ID(N'Sales.Orders');
+
+EXEC sys.sp_tables;
+
+EXEC sys.sp_help @objname = N'Sales.Orders';
+
+SELECT SERVERPROPERTY('Collation');
+
+---------------------------------------------------------------------
+-- exercises --
+---------------------------------------------------------------------
+
+-- (1) --
+SELECT orderid, orderdate, custid, empid
+FROM Sales.Orders
+WHERE orderdate >= '20210601' AND orderdate < '20210701';
+
+-- (2) --
+SELECT orderid, orderdate, custid, empid, EOMONTH(orderdate)
+FROM Sales.Orders
+-- WHERE DATEPART(day, orderdate) = 1;
+WHERE DATEDIFF(day, orderdate, DATEADD(day, -1, EOMONTH(orderdate))) = 0;
+
+-- (3) --
+SELECT empid, firstname, lastname
+FROM HR.Employees
+WHERE LEN(lastname) - LEN(REPLACE(lastname, 'e', '')) >= 2;
+
+-- (4) --
+SELECT orderid, (qty * unitprice) AS totalvalue
+FROM Sales.OrderDetails
+WHERE (qty * unitprice) > 10000
+ORDER BY totalvalue;
