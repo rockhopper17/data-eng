@@ -219,3 +219,8 @@ SELECT orderid, (qty * unitprice) AS totalvalue
 FROM Sales.OrderDetails
 WHERE (qty * unitprice) > 10000
 ORDER BY totalvalue;
+
+-- (5) --
+SELECT empid, lastname
+FROM HR.Employees
+WHERE lastname COLLATE Latin1_General_CS_AS LIKE N'[a-z]%';
